@@ -12,19 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM centos:7 as build
+FROM --platform=ppc64le registry.access.redhat.com/ubi8/ubi:latest as build
 
-RUN yum install -y \
-        gcc-c++ \
-        ca-certificates \
-        wget && \
+RUN yum install -y golang && \
     rm -rf /var/cache/yum/*
 
-ENV GOLANG_VERSION 1.10.3
-RUN wget -nv -O - https://storage.googleapis.com/golang/go${GOLANG_VERSION}.linux-amd64.tar.gz \
-    | tar -C /usr/local -xz
 ENV GOPATH /go
-ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
+ENV PATH $GOPATH/bin:$PATH
 
 WORKDIR /go/src/nvidia-device-plugin
 COPY . .
@@ -32,8 +26,7 @@ COPY . .
 RUN export CGO_LDFLAGS_ALLOW='-Wl,--unresolved-symbols=ignore-in-object-files' && \
     go install -ldflags="-s -w" -v nvidia-device-plugin
 
-
-FROM centos:7
+FROM --platform=ppc64le registry.access.redhat.com/ubi8/ubi-minimal:latest
 
 ENV NVIDIA_VISIBLE_DEVICES=all
 ENV NVIDIA_DRIVER_CAPABILITIES=utility
